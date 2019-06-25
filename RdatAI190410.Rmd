@@ -1,0 +1,440 @@
+---
+title: "RdatAI190410"
+output: html_notebook
+---
+Data from Agroinfiltration 190410, measured 5 dpi 190415. Strong hypersensitive response in 9-18, 9-19, 9-20 treatments. Treatments with fewest signs were sampled and measured.  
+
+
+```{r}
+# EC36309data1 <- read.table("190410Summary.csv", header=TRUE,
+#                          sep=",") # fluorescence results AI190410 36309 + co-infiltrations
+# attach(EC36309data1)
+# 
+# boxplot(GFP~ID, data=EC36309data1, main="GFP",horizontal=TRUE, varwidth=TRUE, xlab="RFU", ylab="Treatment", ylim=c(0, 45))
+# boxplot(RFP~ID, data=EC36309data1, main="RFP", horizontal=TRUE, varwidth=TRUE, xlab="RFU", ylab="Treatment", ylim=c(0, 70))
+# boxplot(GFP.RFP~ID, data=EC36309data1, main="GFP to RFP", horizontal=TRUE, varwidth=TRUE, xlab="ratio", ylab="Treatment", ylim=c(0, 2))
+# 
+# sum(with(EC36309data1, ID=="9"))
+# sum(with(EC36309data1, ID=="9.18"))
+# sum(with(EC36309data1, ID=="9.19"))
+# sum(with(EC36309data1, ID=="9.2"))
+# sum(with(EC36309data1, ID=="9.25"))
+# sum(with(EC36309data1, ID=="9.28"))
+# summary(EC36309data1)
+
+```
+
+Data from 9-18, 9-19, 9-20 and 9-25 should not be trusted, hypersensitive response in most samples most likely skewed RFU data!!
+
+Corrected data: 36309 w/ GFP signal lower than 3.5 RFU were deleted from dataset:
+```{r}
+# EC36309data2 <- read.table("190410SummaryCorr.csv", header=TRUE,
+#                          sep=",") # fluorescence results AI190410 36309 (co-)infiltrations corrected 
+# attach(EC36309data2)
+# 
+# boxplot(GFP~ID, data=EC36309data2, main="GFP",horizontal=TRUE, varwidth=TRUE, xlab="RFU", ylab="Treatment", ylim=c(0, 45))
+# boxplot(RFP~ID, data=EC36309data2, main="RFP", horizontal=TRUE, varwidth=TRUE, xlab="RFU", ylab="Treatment", ylim=c(0, 70))
+# boxplot(GFP.RFP~ID, data=EC36309data2, main="GFP to RFP", horizontal=TRUE, varwidth=TRUE, xlab="ratio", ylab="Treatment", ylim=c(0, 2))
+# 
+# sum(with(EC36309data2, ID=="9"))
+
+```
+Do not use for data analysis!
+
+-----------------------------------
+Data from 7, 7-21, 7-22 co-infiltrations:
+```{r}
+library(ggplot2)
+library(reshape2)
+
+#Combined data from AI190330 (n=6) and AI190410 (n=5)
+
+EC36307_df <- read.table("190410-2.csv", header=TRUE,
+                         sep=",")
+attach(EC36307_df)
+
+# changing the df to long format
+
+EC36307_df_long <- melt(EC36307_df,
+                        id.vars=c("ID"),
+                        measure.vars=c("GFP", "RFP", "GFP.RFP" ),
+                        variable.name="Channel",
+                        value.name="RFU")
+
+attach(EC36307_df_long)
+
+# taking out GFP/RFP ratios
+EC36307_df_long_red <- EC36307_df_long[-c(67:99), ] 
+EC36307_df_long_red
+
+# taking out GFP, RFP single values
+EC36307_df_long_red2 <- EC36307_df_long[-c(1:66), ] 
+EC36307_df_long_red2
+
+# taking out treatment 7
+EC36307mod_df <- read.table("190410-2mod.csv", header=TRUE,
+                         sep=",")
+attach(EC36307mod_df)
+
+EC36307mod_df_long <- melt(EC36307mod_df,
+                        id.vars=c("ID"),
+                        measure.vars=c("GFP", "RFP", "GFP.RFP" ),
+                        variable.name="Channel",
+                        value.name="RFU")
+attach(EC36307mod_df_long)
+
+# taking out GFP/RFP ratios
+EC36307mod_df_long_red <- EC36307mod_df_long[-c(45:66), ] 
+EC36307mod_df_long_red
+
+```
+
+
+Boxplots:
+```{r}
+
+# GFP vs. RFP
+ggplot(data=EC36307_df_long_red, aes(x=ID,y=RFU, colour=factor(Channel))) +
+  geom_boxplot(position=position_dodge2(width=0.5), width=0.5) +
+  labs(tag = "GFP vs. RFP") +
+  scale_color_brewer(palette = "Set2") +
+  theme_classic() +
+  #facet_wrap(~Channel) +
+  #coord_fixed(ratio = 0.0015, xlim = NULL, ylim = NULL) +
+  theme(#axis.line = element_line(colour = "black", size = 1, linetype = "solid"),
+        axis.title.x = element_text(size = 14),
+        axis.title.y = element_text(size = 14),
+        axis.text.x= element_text(size=12),
+        axis.text.y = element_text(size=12)
+        )
+
+
+#Plot of only 7-21, 7-22
+ggplot(data=EC36307mod_df_long_red, aes(x=ID,y=RFU, colour=factor(Channel))) +
+  geom_boxplot(position=position_dodge2(width=0.5), width=0.5) +
+  labs(tag = "GFP vs. RFP") +
+  scale_color_brewer(palette = "Set2") +
+  theme_classic() +
+  #facet_wrap(~Channel) +
+  theme(#axis.line = element_line(colour = "black", size = 1, linetype = "solid"),
+        axis.title.x = element_text(size = 14),
+        axis.title.y = element_text(size = 14),
+        axis.text.x= element_text(size=12),
+        axis.text.y = element_text(size=12)
+        )
+
+
+library(reshape2)
+library(ggpubr)
+
+my_comparisons <- list( c("T7", "T7-21"), c("T7", "T7-22"))
+
+#GFP/RFP ratios
+ggplot(data=EC36307_df_long_red2, aes(x=ID,y=RFU, colour=factor(ID))) +
+  geom_boxplot(position=position_dodge(width=0.5), width=0.5) +
+  labs(tag = "EC36307") +
+  scale_color_grey() + 
+  theme_classic() +
+  coord_fixed(ratio = 0.18, xlim = NULL, ylim = NULL) +
+  #stat_compare_means(method = "t.test", label = "p.format") +
+  theme(#axis.line = element_line(colour = "black", size = 1, linetype = "solid"),
+        axis.title.x = element_text(size = 14),
+        axis.title.y = element_text(size = 14),
+        axis.text.x= element_text(size=12),
+        axis.text.y = element_text(size=12)
+        ) +
+  stat_compare_means(method = "wilcox.test", label = "p.format", comparisons = my_comparisons)
+
+
+
+
+```
+Paired boxplots:
+```{r}
+# paired boxplots 
+library('dplyr')
+
+t7_gr_df <- filter(EC36307_df_long_red, ID == "T7")
+t7_gr_df
+
+t721_gr_df <- filter(EC36307_df_long_red, ID == "T7-21")
+t721_gr_df
+
+t722_gr_df <- filter(EC36307_df_long_red, ID == "T7-22")
+t722_gr_df
+
+library(ggpubr)
+
+pt7 <-  ggpaired(t7_gr_df, x = "Channel", y = "RFU", color = "Channel", width = 0.5, line.color = "gray", line.size = 0.5) +
+  #geom_boxplot(position=position_dodge(width=0.4), width=0.4) +
+  labs(tag = "EC36307") +
+  scale_colour_brewer(palette = "Set2") +
+  theme_classic() +
+  #coord_fixed(ratio = 0.25, xlim = NULL, ylim = NULL, expand = TRUE, clip = "on") +
+  theme(axis.line = element_line(colour = "black", size = 1, linetype = "solid"),
+        axis.title.x = element_text(size = 12),
+        axis.title.y = element_text(size = 12),
+        axis.text.x= element_text(size=12),
+        axis.text.y = element_text(size=12)
+        ) #+
+  #stat_compare_means(method = "t.test", label = "p.format", paired = TRUE)
+
+pt721 <- ggpaired(t721_gr_df, x = "Channel", y = "RFU", color = "Channel", width = 0.5, line.color = "gray", line.size = 0.5) +
+  #geom_boxplot(position=position_dodge(width=0.4), width=0.4) +
+  labs(tag = "EC36307-21") +
+  scale_colour_brewer(palette = "Set2") +
+  theme_classic() +
+  #coord_fixed(ratio = 0.05, xlim = NULL, ylim = NULL, expand = TRUE, clip = "on") +
+  theme(axis.line = element_line(colour = "black", size = 1, linetype = "solid"),
+        axis.title.x = element_text(size = 12),
+        axis.title.y = element_text(size = 12),
+        axis.text.x= element_text(size=12),
+        axis.text.y = element_text(size=12)
+        )
+
+pt722 <- ggpaired(t722_gr_df, x = "Channel", y = "RFU", color = "Channel", width = 0.5, line.color = "gray", line.size = 0.5) +
+  #geom_boxplot(position=position_dodge(width=0.4), width=0.4) +
+  labs(tag = "EC36307-22") +
+  scale_colour_brewer(palette = "Set2") +
+  theme_classic() +
+  #coord_fixed(ratio = 0.05, xlim = NULL, ylim = NULL, expand = TRUE, clip = "on") +
+  theme(axis.line = element_line(colour = "black", size = 1, linetype = "solid"),
+        axis.title.x = element_text(size = 12),
+        axis.title.y = element_text(size = 12),
+        axis.text.x= element_text(size=12),
+        axis.text.y = element_text(size=12)
+        )
+
+pt7
+pt721
+pt722
+
+
+```
+
+
+
+
+Statistical testing:
+```{r}
+############################ Comparison of Means: #############################
+
+## Normality test: qq-plots and Shapiro-Wilk
+# Separating all three datasets
+EC36307_df_1sam7 <- EC36307_df_long_red2[-c(1:22), ] # 7 
+EC36307_df_1sam721 <- EC36307_df_long_red2[-c(12:33), ] # 7-21
+EC36307_df_1sam722 <- EC36307_df_long_red2[-c(1:11,23:33), ] #7-22
+
+library(ggpubr)
+qq7 <- ggqqplot(data=EC36307_df_1sam7$RFU)
+qq7
+
+shapiro.test(EC36307_df_1sam7$RFU)
+# 7 does not appear to be normally distributed
+
+
+qq721 <- ggqqplot(data=EC36307_df_1sam721$RFU)
+qq721
+
+shapiro.test(EC36307_df_1sam721$RFU)
+# 7-21 does not appear to be normally distributed
+
+qq722 <- ggqqplot(data=EC36307_df_1sam722$RFU)
+qq722
+
+shapiro.test(EC36307_df_1sam722$RFU)
+# 7-22 possibly normally distributed
+
+## Testing for equal variances:
+var(EC36307_df_1sam7$RFU)
+var(EC36307_df_1sam721$RFU)
+var(EC36307_df_1sam722$RFU)
+# reducing df to two sample-df:
+
+EC36307_df_2sam1 <- EC36307_df_long_red2[-c(1:11), ]  # 7, 7-22
+EC36307_df_2sam1
+EC36307_df_2sam2 <- EC36307_df_long_red2[-c(12:22), ] # 7, 7-21
+EC36307_df_2sam2
+
+# F-test for equal variances:
+res.ftest1 <- var.test(RFU ~ ID, data = EC36307_df_2sam1)
+res.ftest2 <- var.test(RFU ~ ID, data = EC36307_df_2sam2)
+
+res.ftest1
+res.ftest2
+
+# -> p-values indicate unequal variances. Normality and equal variances not given. Use non-parametric test.
+
+## Wilcoxon rank-sum test:
+
+
+wilcox.test(RFU ~ ID, data=EC36307_df_2sam1, alternative = c("two.sided")) 
+
+wilcox.test(RFU ~ ID, data=EC36307_df_2sam2, alternative = c("two.sided")) 
+
+# p-values of 1.134e-05 for both tests: populations are not the same. (There is a minimum p-value in the Wilc. test, possibly that is why both p-values are the same.)
+```
+
+
+Regression:
+```{r}
+reg7 <- ggplot(EC36307_df, aes(x= RFP, y= GFP, shape = ID, colour=ID)) + #
+  labs(x="RFP (RFU)", y="GFP (RFU)") +
+  #scale_x_continuous(breaks = pretty(RFP, n = 5)) +
+  #scale_y_continuous(breaks = pretty(GFP, n = 5)) +
+  geom_point(size=2) + 
+  geom_smooth(method=lm, size=0.5) +
+  scale_color_brewer(type = 'div', palette = "Accent") +
+  #scale_color_grey() +
+  theme_classic() +
+  coord_fixed(ratio = 0.05, xlim = c(0:50), ylim = c(0:350), expand = TRUE, clip = "on") +
+  theme(axis.line = element_line(colour = "black", size = 1, linetype = "solid"),
+        axis.title.x = element_text(size = 14),
+        axis.title.y = element_text(size = 14),
+        axis.text.x= element_text(size=12),
+        axis.text.y = element_text(size=12),
+        panel.border = element_rect(size = 1, colour = "black", fill = NA)
+        ) +
+  guides(fill = "none")
+
+reg7
+
+reg8 <- ggplot(EC36307_df, aes(RFP, GFP, shape=ID, colour=ID)) + #
+  labs(x="RFP (RFU)", y="GFP (RFU)") +
+  #scale_x_continuous(breaks = pretty(RFP, n = 5)) +
+  #scale_y_continuous(breaks = pretty(GFP, n = 5)) +
+  geom_point( size=2) + 
+  geom_smooth(method=lm, size=0.5) +
+  #scale_color_brewer(type = 'div', palette = "Spectral") +
+  scale_color_grey() +
+  theme_classic() +
+  guides(fill = "none") +
+  #coord_fixed(ratio = 0.05, xlim = c(0:50), ylim = c(0:350), expand = TRUE, clip = "on") +
+  theme(axis.line = element_line(colour = "black", size = 1, linetype = "solid"),
+        axis.title.x = element_text(size = 14),
+        axis.title.y = element_text(size = 14),
+        axis.text.x= element_text(size=12),
+        axis.text.y = element_text(size=12),
+        panel.border = element_rect(size = 1, colour = "black", fill = NA)
+        )
+
+reg8
+
+#plotting without extreme values of 7 (- 6 samples):
+EC36307_df_low <- EC36307_df[-c(28:33), ] 
+EC36307_df_low # n = 5
+
+ggplot(EC36307_df_low, aes(RFP, GFP, shape=ID, colour=ID)) + #
+  labs(x="RFP (RFU)", y="GFP (RFU)") +
+  #scale_x_continuous(breaks = pretty(RFP, n = 5)) +
+  #scale_y_continuous(breaks = pretty(GFP, n = 5)) +
+  geom_point( size=2) + 
+  geom_smooth(method=lm, size=0.8, se=FALSE, fullrange=FALSE) +
+  #scale_color_brewer(
+  scale_color_grey() +
+  theme_classic() +
+  guides(fill = "none") +
+  #coord_fixed(ratio = 0.05)+#, xlim = c(0:50), ylim = c(0:350), expand = TRUE, clip = "on") +
+  theme(axis.line = element_line(colour = "black", size = 1, linetype = "solid"),
+        axis.title.x = element_text(size = 14),
+        axis.title.y = element_text(size = 14),
+        axis.text.x= element_text(size=12),
+        axis.text.y = element_text(size=12),
+        panel.border = element_rect(size = 1, colour = "black", fill = NA)
+        )
+
+```
+
+SLOPE COMPARISON
+```{r}
+##############################################################
+#           SLOPE COMPARISON
+##############################################################
+# Scatterplot of GFP to RFP for 7 n = 5, (lowest 5 datapoints), 7-21 and 7-22
+library(devtools)
+source_gist("524eade46135f6348140")
+ggplot(EC36307_df_low, aes(RFP, GFP, shape=ID, colour=ID)) + #
+  labs(x="RFP (RFU)", y="GFP (RFU)") +
+  #scale_x_continuous(breaks = pretty(RFP, n = 5)) +
+  #scale_y_continuous(breaks = pretty(GFP, n = 5)) +
+  geom_point( size=2) +
+  stat_smooth_func(geom="text",method="lm",hjust=0,parse=TRUE) + #show equations in figure
+  geom_smooth(method=lm, size=0.8, se=TRUE, alpha = 0.15, fullrange=FALSE) +
+  #scale_color_brewer(
+  scale_color_grey() +
+  theme_classic() +
+  guides(fill = "none") +
+  #coord_fixed(ratio = 0.05)+#, xlim = c(0:50), ylim = c(0:350), expand = TRUE, clip = "on") +
+  theme(axis.line = element_line(colour = "black", size = 1, linetype = "solid"),
+        axis.title.x = element_text(size = 14),
+        axis.title.y = element_text(size = 14),
+        axis.text.x= element_text(size=12),
+        axis.text.y = element_text(size=12),
+        panel.border = element_rect(size = 1, colour = "black", fill = NA)
+        )
+
+
+# Comparing slopes, EC36307 only n = 5 (lowest five values) 
+library(lsmeans)
+m.interaction <- lm(GFP ~ RFP*ID, data = EC36307_df_low)
+m.interaction
+# ANOVA not possible due to non-normality and heteroscedascdicity
+
+
+# Obtain slopes
+m.interaction$coefficients
+m.lst <- lstrends(m.interaction, "ID", var="RFP")
+m.lst
+
+# Compare slopes
+pairs(m.lst)
+##############################################################
+
+```
+
+```{r}
+####### SLOPE COMPARISON: All samples included
+m.interaction2 <- lm(GFP ~ RFP*ID, data = EC36307_df) # prediction of GFP (dependent) signal through RFP (independent) according to ID
+
+# Obtain slopes
+m.interaction2$coefficients
+m.lst2 <- lstrends(m.interaction2, "ID", var="RFP")
+m.lst2
+
+# Compare slopes
+pairs(m.lst2)
+
+# high p-values: including large datapoints of 7 made all interactions non-significant.
+
+#visualize by scatterplot
+ggplot(EC36307_df, aes(RFP, GFP, shape=ID, colour=ID)) + #
+  labs(x="RFP (RFU)", y="GFP (RFU)") +
+  #scale_x_continuous(breaks = pretty(RFP, n = 5)) +
+  #scale_y_continuous(breaks = pretty(GFP, n = 5)) +
+  geom_point( size=2) +
+  stat_smooth_func(geom="text",method="lm",hjust=0,parse=TRUE) + #show equations in figure
+  geom_smooth(method=lm, size=0.8, se=TRUE, alpha = 0.15, fullrange=FALSE) +
+  #scale_color_brewer(
+  scale_color_grey() +
+  theme_classic() +
+  guides(fill = "none") +
+  coord_fixed(ratio = 0.1, xlim = c(0:50), ylim = c(0:300), expand = TRUE, clip = "on") +
+  theme(axis.line = element_line(colour = "black", size = 1, linetype = "solid"),
+        axis.title.x = element_text(size = 14),
+        axis.title.y = element_text(size = 14),
+        axis.text.x= element_text(size=12),
+        axis.text.y = element_text(size=12),
+        panel.border = element_rect(size = 1, colour = "black", fill = NA)
+        )
+
+
+```
+
+
+
+Regression summary: p-values:
+```{r}
+summary(m.interaction)
+summary(m.lst)
+```
+

@@ -1,0 +1,39 @@
+---
+title: "RdatAI190330"
+output: html_notebook
+---
+
+```{r}
+EC36309data1 <- read.table("Merge190320w190322w190330.csv", header=TRUE,
+                         sep=",") # merged fluorecence data of EC36309 treatments, three independent experiments
+attach(EC36309data1)
+
+boxplot(GFP~ID, data=EC36309data1, main="GFP",horizontal=TRUE, varwidth=TRUE, xlab="RFU", ylab="Treatment", ylim=c(0, 45))
+boxplot(RFP~ID, data=EC36309data1, main="RFP", horizontal=TRUE, varwidth=TRUE, xlab="RFU", ylab="Treatment", ylim=c(0, 70))
+boxplot(GFP.RFP~ID, data=EC36309data1, main="GFP to RFP", horizontal=TRUE, varwidth=TRUE, xlab="ratio", ylab="Treatment", ylim=c(0, 2))
+boxplot(GFP.RFP, data=EC36309data1, main="GFP to RFP", horizontal=TRUE, varwidth=TRUE, xlab="ratio", ylab="Treatment", ylim=c(0, 2))
+
+summary(EC36309data1)
+
+sd(EC36309data1$GFP.RFP, na.rm = FALSE) # combined mean 36309 GFP/RFP, n=38, mean=0.49, sd=0.13 
+
+
+```
+
+Including data on EC36309 from third independent experiment, n = 8, mean GFP/RFP ratio converges more towards 0.5. 
+
+CRISPR treatments 9-18, 9-19 and 9-20 again unusable due to HR.
+
+CRISPR validation:
+```{r}
+EC36307data1 <- read.table("36307dat.csv", header=TRUE,
+                         sep=",") # fluorescence data of 36307 CRISPR treatments
+attach(EC36307data1)
+
+boxplot(GFP~ID, data=EC36307data1, main="GFP",horizontal=TRUE, varwidth=TRUE, xlab="RFU", ylab="Treatment", ylim=c(0, 1600))
+boxplot(RFP~ID, data=EC36307data1, main="RFP", horizontal=TRUE, varwidth=TRUE, xlab="RFU", ylab="Treatment", ylim=c(0, 700))
+boxplot(GFP.RFP~ID, data=EC36307data1, main="GFP to RFP", horizontal=TRUE, varwidth=TRUE, xlab="ratio", ylab="Treatment", ylim=c(0, 25))
+boxplot(GFP.RFP, data=EC36307data1, main="GFP to RFP", horizontal=TRUE, varwidth=TRUE, xlab="ratio", ylab="Treatment", ylim=c(0, 25))
+  
+```
+

@@ -1,0 +1,516 @@
+---
+title: "RRdatAI190418 AI190506"
+output: html_notebook
+---
+
+```{r}
+library(ggplot2)
+library(reshape2)
+library(ggpubr)
+library(dplyr)
+library(RColorBrewer)
+library(plotly)
+library(rstatix)  
+library(RATest)
+
+
+AIsumm_df <- read.table("AIsumm.csv", header=TRUE,
+                         sep=",") # merged fluorecence data of CRISPR assay 190418 and 190506
+attach(AIsumm_df)
+
+
+# changing the df to long format
+
+AIsumm_df_long <- melt(AIsumm_df,
+                        id.vars=c("ID"),
+                        measure.vars=c("GFP", "RFP", "GFP.RFP" ),
+                        variable.name="Channel",
+                        value.name="RFU")
+
+
+```
+
+
+
+Boxplots:P
+```{r}
+
+# Looking only at GFP/RFP ratios
+
+AIsumm_df_long_red2 <- AIsumm_df_long[-c(1:282), ] 
+
+pall <- ggplot(data=AIsumm_df_long_red2, aes(x=ID,y=RFU, colour=factor(ID))) +
+  geom_boxplot(position=position_dodge2(width=0.4), width=0.4) +
+  #scale_y_continuous(breaks = 1) +
+  #scale_color_grey() + 
+  theme_classic() +
+  #coord_fixed(ratio = 3, xlim = NULL, ylim = c(0,1), expand = TRUE, clip = "on") +
+  theme(axis.line = element_line(colour = "black", size = 1, linetype = "solid"),
+        axis.title.x = element_text(size = 12),
+        axis.title.y = element_text(size = 12),
+        axis.text.x= element_text(size=12),
+        axis.text.y = element_text(size=12)
+        )
+
+pall
+
+# removing outliers in 9-26 (1) and 9-27 (3)
+AIsumm_df_long_red2_mod <-AIsumm_df_long_red2[-c(105,116,124,126,127), ]
+
+pall_mod <- ggplot(data=AIsumm_df_long_red2_mod, aes(x=ID,y=RFU, colour=factor(ID))) +
+  geom_boxplot(position=position_dodge2(width=0.4), width=0.4) +
+  #scale_y_continuous(breaks = 1) +
+  #scale_color_grey() +
+  #colorRampPalette(brewer.pal(n_palette, "palette_name"))(n_plot),
+  theme_classic() +
+  #coord_fixed(ratio = 3, xlim = NULL, ylim = c(0,1), expand = TRUE, clip = "on") +
+  theme(axis.line = element_line(colour = "black", size = 1, linetype = "solid"),
+        axis.title.x = element_text(size = 12),
+        axis.title.y = element_text(size = 12),
+        axis.text.x= element_text(size=12, angle = 45, hjust = 1),
+        axis.text.y = element_text(size=12)
+        )
+
+pall_mod
+
+```
+
+Separating data according to Cas-type:
+```{r}
+AIsumm1_df <- read.table("AIsumm1.csv", header=TRUE,
+                         sep=",") # merged fluorecence data of CRISPR assay 190418 and 190506
+AIsumm2_df <- read.table("AIsumm2.csv", header=TRUE,
+                         sep=",") # merged fluorecence data of CRISPR assay 190418 and 190506
+AIsumm3_df <- read.table("AIsumm3.csv", header=TRUE,
+                         sep=",") # merged fluorecence data of CRISPR assay 190418 and 190506
+
+attach(AIsumm1_df)
+attach(AIsumm2_df)
+attach(AIsumm3_df)
+
+AIsumm1_df_long <- melt(AIsumm1_df,
+                        id.vars=c("ID"),
+                        measure.vars=c("GFP", "RFP", "GFP.RFP" ),
+                        variable.name="Channel",
+                        value.name="RFU")
+
+AIsumm2_df_long <- melt(AIsumm2_df,
+                        id.vars=c("ID"),
+                        measure.vars=c("GFP", "RFP", "GFP.RFP" ),
+                        variable.name="Channel",
+                        value.name="RFU")
+
+AIsumm3_df_long <- melt(AIsumm3_df,
+                        id.vars=c("ID"),
+                        measure.vars=c("GFP", "RFP", "GFP.RFP" ),
+                        variable.name="Channel",
+                        value.name="RFU")
+
+AIsumm1_df_long_red <- AIsumm1_df_long[-c(87:129), ] 
+AIsumm1_df_long_red2 <- AIsumm1_df_long[-c(1:86), ] 
+
+AIsumm2_df_long_red <- AIsumm2_df_long[-c(77:114), ] 
+AIsumm2_df_long_red2 <- AIsumm2_df_long[-c(1:76), ] 
+
+AIsumm3_df_mod <-  AIsumm3_df[-c(24, 35, 43, 45, 46), ]
+AIsumm3_df_long_red <- AIsumm3_df_long[-c(121:180), ] 
+AIsumm3_df_long_red2 <- AIsumm3_df_long[-c(1:120), ] 
+
+#removing outliers from 9-26 (2) and 9-27 (3) 
+AIsumm3_df_long_red2_mod <- AIsumm3_df_long_red2[-c(24, 35, 43, 45, 46), ] 
+
+
+# summarize GFP or RFP between groups
+group_by(AIsumm1_df, ID) %>%
+  summarise(
+    count = n(),
+    #medianG = median(GFP, na.rm = TRUE),
+    meanG = mean(GFP, na.rm = TRUE),
+    sdevG = sd(GFP, na.rm = TRUE),
+    #medianR = median(RFP, na.rm = TRUE),
+    meanR = mean(RFP, na.rm = TRUE),
+    sdevR = sd(RFP, na.rm = TRUE)
+    #IQR = IQR(GFP, na.rm = TRUE)
+  )
+
+group_by(AIsumm2_df, ID) %>%
+  summarise(
+    count = n(),
+    #medianG = median(GFP, na.rm = TRUE),
+    meanG = mean(GFP, na.rm = TRUE),
+    sdevG = sd(GFP, na.rm = TRUE),
+    #medianR = median(RFP, na.rm = TRUE),
+    meanR = mean(RFP, na.rm = TRUE),
+    sdevR = sd(RFP, na.rm = TRUE)
+    #IQR = IQR(GFP, na.rm = TRUE)
+  )
+
+group_by(AIsumm3_df, ID) %>%
+  summarise(
+    count = n(),
+    #medianG = median(GFP, na.rm = TRUE),
+    meanG = mean(GFP, na.rm = TRUE),
+    sdevG = sd(GFP, na.rm = TRUE),
+    #medianR = median(RFP, na.rm = TRUE),
+    meanR = mean(RFP, na.rm = TRUE),
+    sdevR = sd(RFP, na.rm = TRUE)
+    #IQR = IQR(GFP, na.rm = TRUE)
+  )
+
+
+# summarize GFP/RFP ratios between groups
+group_by(AIsumm1_df_long_red2, ID) %>%
+  summarise(
+    count = n(),
+    mean = mean(RFU, na.rm = TRUE),
+    sdev = sd(RFU, na.rm = TRUE)
+  )
+
+group_by(AIsumm2_df_long_red2, ID) %>%
+  summarise(
+    count = n(),
+    mean = mean(RFU, na.rm = TRUE),
+    sdev = sd(RFU, na.rm = TRUE)
+  )
+
+group_by(AIsumm3_df_long_red2_mod, ID) %>%
+  summarise(
+    count = n(),
+    mean = mean(RFU, na.rm = TRUE),
+    sdev = sd(RFU, na.rm = TRUE)
+  )
+
+
+```
+
+
+Boxplots GFP vs. RFP
+```{r}
+p1 <- ggplot(data=AIsumm1_df_long_red, aes(x=ID,y=RFU, colour=factor(Channel))) +
+  geom_boxplot(position=position_dodge2(width=0.4), width=0.4) +
+  labs(tag = "GFP vs. RFP") +
+  scale_color_brewer(palette = "Set2") +
+  theme_classic() +
+  coord_cartesian(ylim = c(0, 8)) +
+  #facet_wrap(~Channel) +
+  #coord_fixed(ratio = 0.05, xlim = NULL, ylim = NULL, expand = TRUE, clip = "on") +
+  theme(axis.line = element_line(colour = "black", size = 1, linetype = "solid"),
+        axis.title.x = element_text(size = 12),
+        axis.title.y = element_text(size = 12),
+        axis.text.x= element_text(size=12),
+        axis.text.y = element_text(size=12)
+        )
+
+
+p2 <- ggplot(data=AIsumm2_df_long_red, aes(x=ID,y=RFU, colour=factor(Channel))) +
+  geom_boxplot(position=position_dodge2(width=0.4), width=0.4) +
+  labs(tag = "GFP vs. RFP") +
+  scale_color_brewer(palette = "Set2") +
+  theme_classic() +
+  coord_cartesian(ylim = c(0, 8)) +
+  #facet_wrap(~Channel) +
+  #coord_fixed(ratio = 0.05, xlim = NULL, ylim = NULL, expand = TRUE, clip = "on") +
+  theme(axis.line = element_line(colour = "black", size = 1, linetype = "solid"),
+        axis.title.x = element_text(size = 12),
+        axis.title.y = element_text(size = 12),
+        axis.text.x= element_text(size=12),
+        axis.text.y = element_text(size=12)
+        )
+
+
+p3 <- ggplot(data=AIsumm3_df_long_red, aes(x=ID,y=RFU, colour=factor(Channel))) +
+  geom_boxplot(position=position_dodge2(width=0.4), width=0.4) +
+  labs(tag = "GFP vs. RFP") +
+  scale_color_brewer(palette = "Set2") +
+  theme_classic() +
+  #facet_wrap(~Channel) +
+  #coord_fixed(ratio = 0.05, xlim = NULL, ylim = NULL, expand = TRUE, clip = "on") +
+  theme(axis.line = element_line(colour = "black", size = 1, linetype = "solid"),
+        axis.title.x = element_text(size = 12),
+        axis.title.y = element_text(size = 12),
+        axis.text.x= element_text(size=12),
+        axis.text.y = element_text(size=12)
+        )
+
+
+p3zoom <- ggplot(data=AIsumm3_df_long_red, aes(x=ID,y=RFU, colour=factor(Channel))) +
+  geom_boxplot(position=position_dodge2(width=0.4), width=0.4) +
+  labs(tag = "GFP vs. RFP") +
+  scale_color_brewer(palette = "Set2") +
+  theme_classic() +
+  coord_cartesian(ylim = c(0, 8)) +
+  #facet_wrap(~Channel) +
+  #coord_fixed(ratio = 0.05, xlim = NULL, ylim = NULL, expand = TRUE, clip = "on") +
+  theme(axis.line = element_line(colour = "black", size = 1, linetype = "solid"),
+        axis.title.x = element_text(size = 12),
+        axis.title.y = element_text(size = 12),
+        axis.text.x= element_text(size=12),
+        axis.text.y = element_text(size=12)
+        )
+p1
+p2
+p3
+p3zoom
+
+
+```
+
+Boxplots ratios:
+```{r}
+p4 <- ggplot(data=AIsumm1_df_long_red2, aes(x=ID,y=RFU)) +
+  geom_boxplot(position=position_dodge2(width=0.4), width=0.4) +
+  #geom_dotplot(binaxis='y', stackdir='center', dotsize=0.4, colour='grey', fill='grey') +
+  labs(tag = "GFP vs. RFP") +
+  scale_color_grey() +
+  theme_classic() +
+  coord_cartesian(ylim = c(0, 1.5)) +
+  #facet_wrap(~Channel) +
+  #coord_fixed(ratio = 3.55, xlim = NULL, ylim = NULL, expand = TRUE, clip = "on") +
+  theme(axis.line = element_line(colour = "black", size = 1, linetype = "solid"),
+        axis.title.x = element_text(size = 12),
+        axis.title.y = element_text(size = 12),
+        axis.text.x= element_text(size=12),
+        axis.text.y = element_text(size=12)
+        )
+
+p5 <- ggplot(data=AIsumm2_df_long_red2, aes(x=ID,y=RFU)) +
+  geom_boxplot(position=position_dodge2(width=0.4), width=0.4) +
+  #geom_dotplot(binaxis='y', stackdir='center', dotsize=0.5, colour='grey', fill='grey') +
+  labs(tag = "GFP vs. RFP") +
+  scale_color_grey() +
+  theme_classic() +
+  coord_cartesian(ylim = c(0, 1.5)) +
+  #facet_wrap(~Channel) +
+  #coord_fixed(ratio = 0.55, xlim = NULL, ylim = NULL, expand = TRUE, clip = "on") +
+  theme(axis.line = element_line(colour = "black", size = 1, linetype = "solid"),
+        axis.title.x = element_text(size = 12),
+        axis.title.y = element_text(size = 12),
+        axis.text.x= element_text(size=12),
+        axis.text.y = element_text(size=12)
+        )
+
+p6 <- ggplot(data=AIsumm3_df_long_red2_mod, aes(x=ID,y=RFU)) +
+  geom_boxplot(position=position_dodge2(width=0.3), width=0.3) +
+  #geom_dotplot(binaxis='y', stackdir='center', dotsize=0.5, colour='grey', fill='grey') +
+  labs(tag = "GFP vs. RFP") +
+  scale_color_grey() +
+  theme_classic() +
+  #facet_wrap(~Channel) +
+  #coord_fixed(ratio = 0.55, xlim = NULL, ylim = NULL, expand = TRUE, clip = "on") +
+  theme(axis.line = element_line(colour = "black", size = 1, linetype = "solid"),
+        axis.title.x = element_text(size = 12),
+        axis.title.y = element_text(size = 12),
+        axis.text.x= element_text(size=12),
+        axis.text.y = element_text(size=12)
+        )
+
+
+
+p6zoom <- ggplot(data=AIsumm3_df_long_red2_mod, aes(x=ID,y=RFU)) +
+  geom_boxplot(position=position_dodge2(width=0.4), width=0.4) +
+  labs(tag = "GFP vs. RFP") +
+  scale_color_grey() +
+  theme_classic() +
+  coord_cartesian(ylim = c(0, 1.5)) +
+  #facet_wrap(~Channel) +
+  #coord_fixed(ratio = 0.55, xlim = NULL, ylim = NULL, expand = TRUE, clip = "on") +
+  theme(axis.line = element_line(colour = "black", size = 1, linetype = "solid"),
+        axis.title.x = element_text(size = 12),
+        axis.title.y = element_text(size = 12),
+        axis.text.x= element_text(size=12),
+        axis.text.y = element_text(size=12)
+        )
+
+
+comparisons1 <- list(c("T9-29", "T9-18"), c("T9-29", "T9-19"), c("T9-29", "T9-20"))
+comparisons2 <- list(c("T9-30", "T9-23"), c("T9-30", "T9-24"), c("T9-30", "T9-25"))
+comparisons3 <- list(c("T9-31", "T9-26"), c("T9-31", "T9-27"), c("T9-31", "T9-28"))
+
+p4p <- p4 + stat_compare_means(method = "wilcox.test", label = "p.format", comparisons = comparisons1)
+p5p <- p5 + stat_compare_means(method = "wilcox.test", label = "p.format", comparisons = comparisons2)
+p6p <- p6 + stat_compare_means(method = "wilcox.test", label = "p.format", comparisons = comparisons3)
+
+pctrl <- pall_mod + stat_compare_means(method = "wilcox.test", label = "p.format", comparisons = comparisons3)
+
+
+p4p
+p5p
+p6p
+p6zoom
+
+```
+
+
+
+Splitting dataframes:
+```{r}
+library('dplyr')
+
+ 
+###### Only ratios
+
+summary(AIsumm1_df_long_red2)
+
+t918_df <- filter(AIsumm1_df_long_red2, ID == "T9-18")
+t919_df <- filter(AIsumm1_df_long_red2, ID == "T9-19")
+t920_df <- filter(AIsumm1_df_long_red2, ID == "T9-20")
+t929_df <- filter(AIsumm1_df_long_red2, ID == "T9-29")
+
+summary(AIsumm2_df_long_red2)
+
+t923_df <- filter(AIsumm2_df_long_red2, ID == "T9-23")
+t924_df <- filter(AIsumm2_df_long_red2, ID == "T9-24")
+t925_df <- filter(AIsumm2_df_long_red2, ID == "T9-25")
+t930_df <- filter(AIsumm2_df_long_red2, ID == "T9-30")
+
+summary(AIsumm3_df_long_red2_mod)
+
+t926_df <- filter(AIsumm3_df_long_red2, ID == "T9-26")
+t927_df <- filter(AIsumm3_df_long_red2, ID == "T9-27")
+t928_df <- filter(AIsumm3_df_long_red2, ID == "T9-28")
+t931_df <- filter(AIsumm3_df_long_red2, ID == "T9-31")
+
+#Controls
+tctrl_df <- rbind(t929_df, t930_df, t931_df)
+summary(tctrl_df)
+
+```
+
+Summary stats within
+```{r}
+summary(t918_df)
+
+
+```
+
+
+
+Statistic analysis:
+```{r}
+### Normality tests:
+qq918 <- ggqqplot(data=t918_df$RFU) + labs(tag = "crispr-18")
+qq919 <- ggqqplot(data=t919_df$RFU) + labs(tag = "crispr-19")
+qq920 <- ggqqplot(data=t920_df$RFU) + labs(tag = "crispr-20")
+qq929 <- ggqqplot(data=t929_df$RFU) + labs(tag = "crispr-ctrl")
+
+qq923 <- ggqqplot(data=t923_df$RFU) + labs(tag = "crisprI-23")
+qq924 <- ggqqplot(data=t924_df$RFU) + labs(tag = "crisprI-24")
+qq925 <- ggqqplot(data=t925_df$RFU) + labs(tag = "crisprI-25")
+qq930 <- ggqqplot(data=t930_df$RFU) + labs(tag = "crisprI-ctrl")
+
+qq926 <- ggqqplot(data=t926_df$RFU) + labs(tag = "crisprA-26")
+qq927 <- ggqqplot(data=t927_df$RFU) + labs(tag = "crisprA-27")
+qq928 <- ggqqplot(data=t928_df$RFU) + labs(tag = "crisprA-28")
+qq931 <- ggqqplot(data=t931_df$RFU) + labs(tag = "crisprA-ctrl")
+
+qq918 
+qq919 
+qq920 
+qq929 
+
+qq923 
+qq924 
+qq925 
+qq930 
+
+qq926 
+qq927 
+qq928 
+qq931 
+
+#  follow for the most part noramlity criteria
+
+## Shapiro-wilk test
+
+shapiro.test(t918_df$RFU) # p-value = 0.346
+shapiro.test(t919_df$RFU) # p-value = 0.3411
+shapiro.test(t920_df$RFU) # p-value = 0.04243     ..tests not normal
+shapiro.test(t929_df$RFU) # p-value = 0.9347
+
+shapiro.test(t923_df$RFU) # p-value = 0.9936
+shapiro.test(t924_df$RFU) # p-value = 0.1198
+shapiro.test(t925_df$RFU) # p-value = 0.7255
+shapiro.test(t930_df$RFU) # p-value = 0.01332     ..tests not normal
+
+shapiro.test(t926_df$RFU) # p-value = 2.379e-07   ..tests not normal
+shapiro.test(t927_df$RFU) # p-value = 0.06551     ..tests not normal
+shapiro.test(t928_df$RFU) # p-value = 0.6075
+shapiro.test(t931_df$RFU) # p-value = 0.237
+```
+
+
+
+```{r}
+# Calculating and adding adjusted p-values to the boxplots
+#Source: https://github.com/kassambara/ggpubr/issues/65#issuecomment-407211245
+#stat_pvalue_manual function: https://www.rdocumentation.org/packages/ggpubr/versions/0.2/topics/stat_pvalue_manual
+
+# Pairwise wilcoxon rank sum test between groups
+stat.test1 <- AIsumm1_df_long_red2 %>%
+  group_by("ID") %>%
+  wilcox_test(RFU ~ ID) %>%
+  adjust_pvalue(method = 'holm') %>%
+  mutate(y.position = 2)#, p = signif(p, digits = 4),
+  #p.adj = signif(p.adj, digits = 6))
+
+#adding adjusted p-value to boxplot
+p4adjust <- p4p + stat_pvalue_manual(stat.test1, label = "p = {p.adj}")
+
+stat.test2 <- AIsumm2_df_long_red2 %>%
+  group_by("ID") %>%
+  wilcox_test(RFU ~ ID) %>%
+  adjust_pvalue(method = 'holm') %>%
+  mutate(y.position = 2)#, p = signif(p, digits = 4),
+  #p.adj = signif(p.adj, digits = 6))
+
+p5adjust <- p5p + stat_pvalue_manual(stat.test2, label = "p = {p.adj}")
+
+stat.test3 <- AIsumm3_df_long_red2_mod %>%
+  group_by("ID") %>%
+  wilcox_test(RFU ~ ID) %>%
+  adjust_pvalue(method = 'holm') %>%
+  mutate(y.position = 7.5)#, p = signif(p, digits = 4),
+  #p.adj = signif(p.adj, digits = 6))
+
+p6adjust <- p6p + stat_pvalue_manual(stat.test3, label = "p = {p.adj}")
+
+# comparing means of controls 9-29, 9-30, 9-31
+stat.testCtrl <- tctrl_df %>%
+  group_by("ID") %>%
+  kruskal_test(RFU ~ ID) %>%
+  #adjust_pvalue(method = 'holm') %>%
+  mutate(y.position = 7.5)#, p = signif(p, digits = 4),
+  #p.adj = signif(p.adj, digits = 6))
+
+
+# Output: comparing means within CRISPR-groups (wilcoxon)
+stat.test1
+stat.test2
+stat.test3
+
+# Output: comparing means of controls 9-29, 9-30, 9-31
+stat.testCtrl
+kruskal.test(RFU ~ ID, data = tctrl_df)
+
+p4adjust
+p5adjust
+p6adjust
+p6zoom
+
+```
+
+```{r}
+# RA test von Mau
+#install.packages("RATest")
+
+#male<-rnorm(50,1,1)
+#female<-rnorm(50,1,2)
+#dta<-data.frame(group=c(rep(1,50),rep(2,50)),outcome=c(male,female))
+#rpt.var<-RPT(dta$outcome~dta$group,test="variances")
+#summary(rpt.var)
+#rpt.var$pvalue
+
+#rpt.ben <- 
+```
+
+
